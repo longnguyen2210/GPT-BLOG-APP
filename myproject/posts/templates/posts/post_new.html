@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block title %}
+
+New Post
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.0/dist/js.cookie.min.js"></script>
+
+
+<script>
+    $(document).ready(function() {
+        // Send the form on enter keypress and avoid if shift is pressed
+        $('#prompt').keypress(function(event) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                event.preventDefault();
+                $('form').submit();
+            }
+        });
+        $('form').on('submit', function(event) {
+            event.preventDefault();
+        // get the CSRF token from the cookie
+        var csrftoken = Cookies.get('csrftoken');
+        
+        // set the CSRF token in the AJAX headers
+        $.ajaxSetup({
+            headers: { 'X-CSRFToken': csrftoken }
+        });
+            // Get the prompt
+            var prompt = $('#prompt').val();
+            var dateTime = new Date();
+            var time = dateTime.toLocaleTimeString();
+            // Add the prompt to the response div
+            $('#response').append('<p>('+ time + ') <i class="bi bi-person"></i>: ' + prompt + '</p>');
+            // Clear the prompt
+            $('#prompt').val('');
+            $.ajax({
+                url: 'query/',
+                type: 'POST',
+                data: {prompt: prompt},
+                dataType: 'json',
+                success: function(data) {
+                    $('#response').append('<p>('+ time + ') <i class="bi bi-robot"></i>: ' + data.response + '</p>');
+                }
+            });
+        });
+    });
+</script>
+{% endblock scripts %}
+{% block content %}
+<section>
+    <form method="post">
+        {% csrf_token %}
+        <label for="prompt" class="form-label"><strong> AI Prompt: </strong></label> <br/> 
+        <textarea class="form-control" type="textarea" id="prompt" name="prompt" rows="3"> </textarea>
+        <br>
+        <button class="form-submit" type="submit">Submit</button>
+    </form>
+
+    <h6>Response:</h6> 
+        <div class="text-box" id="response"></div>
+
+        
+    <h1>New Post</h1>
+    <form class="form-with-validation" action ="{% url 'posts:new-post' %}" method ="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {{form}}
+
+        <button class= "form-submit" type ="submit"> Add Post </button>
+    </form>
+</section>
+{% endblock content %}
